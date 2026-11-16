@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import { protect } from '../middleware/auth.middleware.js';
+import { listParking, getParking, createParking, updateParking, deleteParking } from '../controllers/parking.controller.js';
+const router = Router();
+router.get('/', listParking);
+router.get('/:id', getParking);
+router.post('/', protect('admin'), createParking);
+router.put('/:id', protect('admin'), updateParking);
+router.delete('/:id', protect('admin'), deleteParking);
+export default router;

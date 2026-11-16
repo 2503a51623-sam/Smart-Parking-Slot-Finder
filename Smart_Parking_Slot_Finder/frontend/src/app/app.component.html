@@ -1,0 +1,757 @@
+<header class="topbar">
+  <a class="brand" (click)="mode='home'">
+    <span class="brand-icon">P</span>
+    <span>Park<span class="accent">Wise</span>
+      <small>SMART PARKING SLOT FINDER</small>
+    </span>
+  </a>
+
+  <nav *ngIf="mode==='home'">
+    <a href="#features">Features</a>
+    <a href="#how">How it works</a>
+  </nav>
+
+  <div class="top-actions">
+    <ng-container *ngIf="mode==='home'; else logged">
+      <button class="btn ghost" (click)="openAuth('admin-login')">Admin login</button>
+      <button class="btn primary" (click)="openAuth('user-login')">User login</button>
+    </ng-container>
+
+    <ng-template #logged>
+      <span class="welcome">Hi, {{profileName}}</span>
+      <button class="btn ghost" (click)="logout()">Log out</button>
+    </ng-template>
+  </div>
+</header>
+
+<!-- HOME PAGE -->
+
+<main *ngIf="mode==='home'" class="home">
+
+  <section class="hero">
+    <div class="hero-copy">
+      <div class="eyebrow"><span></span> PARK SMARTER. ARRIVE FASTER.</div>
+
+      <h1>Your parking spot.<br><em>Without the hunt.</em></h1>
+
+      <p>Find available parking, reserve your space and navigate straight to the entrance. Less circling, more living.</p>
+
+      <div class="hero-actions">
+        <button class="btn primary large" (click)="openAuth('register')">
+          Find parking <span>→</span>
+        </button>
+
+        <button class="btn text" (click)="openAuth('user-login')">
+          I already have an account
+        </button>
+      </div>
+
+      <div class="trust">
+        <span>● Live availability</span>
+        <span>● Easy reservations</span>
+        <span>● Turn-by-turn route</span>
+      </div>
+    </div>
+
+    <div class="hero-art">
+      <div class="map-card">
+        <div class="map-grid"></div>
+        <div class="road road-one"></div>
+        <div class="road road-two"></div>
+        <div class="route-line"></div>
+        <div class="pin pin-a">P</div>
+        <div class="pin pin-b">P</div>
+        <div class="car">🚙</div>
+        <div class="map-label">PARKING NEAR YOU <b>12 spots</b></div>
+
+        <div class="floating-card">
+          <span class="check">✓</span>
+          <div><b>Space secured!</b><small>Your spot is waiting.</small></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feature-strip" id="features">
+    <article>
+      <b>01</b>
+      <h3>Find a space</h3>
+      <p>Explore nearby parking on an interactive map.</p>
+    </article>
+
+    <article>
+      <b>02</b>
+      <h3>Book in seconds</h3>
+      <p>Reserve an available slot before you arrive.</p>
+    </article>
+
+    <article>
+      <b>03</b>
+      <h3>Navigate there</h3>
+      <p>Follow a real driving route to your destination.</p>
+    </article>
+  </section>
+
+  <section class="how" id="how">
+    <div>
+      <div class="eyebrow">SIMPLE BY DESIGN</div>
+      <h2>Parking, minus<br>the <em>guesswork.</em></h2>
+    </div>
+
+    <p>Sign in to see live parking availability. Choose a location, reserve your slot and use directions or Street View to find the place with confidence.</p>
+  </section>
+
+  <footer>© 2026 ParkWise · Smart Parking Slot Finder · Academic project</footer>
+
+</main>
+
+<!-- USER AND ADMIN DASHBOARD -->
+
+<main *ngIf="mode==='user' || mode==='admin'" class="dashboard">
+
+  <div class="dash-heading">
+    <div>
+      <div class="eyebrow">
+        PARKWISE / {{mode==='admin'?'ADMIN CONTROL':'PARKING EXPLORER'}}
+      </div>
+
+      <h1>{{mode==='admin'?'Control centre':'Find your space.'}}</h1>
+
+      <p>
+        {{mode==='admin'
+          ?'Manage locations, capacity and reservations.'
+          :'Explore available spaces and reserve your parking.'}}
+      </p>
+    </div>
+
+    <button class="btn ghost" (click)="loadLocations()">↻ Refresh</button>
+  </div>
+
+  <div *ngIf="message" class="notice success">{{message}}</div>
+  <div *ngIf="error" class="notice error">{{error}}</div>
+
+  <!-- ADMIN STATISTICS -->
+
+  <section *ngIf="mode==='admin'" class="stats">
+    <article>
+      <small>PARKING LOCATIONS</small>
+      <strong>{{stats.locations || 0}}</strong>
+    </article>
+
+    <article>
+      <small>TOTAL SLOTS</small>
+      <strong>{{stats.totalSlots || 0}}</strong>
+    </article>
+
+    <article>
+      <small>AVAILABLE SLOTS</small>
+      <strong class="green">{{stats.availableSlots || 0}}</strong>
+    </article>
+
+    <article>
+      <small>OCCUPIED SLOTS</small>
+      <strong>{{stats.occupiedSlots || 0}}</strong>
+    </article>
+  </section>
+
+  <!-- ADMIN ADD PARKING FORM -->
+
+  <section *ngIf="mode==='admin'" class="panel form-panel">
+
+    <div class="section-title">
+      <div>
+        <h2>{{editingId?'Edit parking location':'Add parking location'}}</h2>
+        <p>Manage separate capacities for each vehicle type.</p>
+      </div>
+    </div>
+
+    <form class="parking-form" (ngSubmit)="saveParking()">
+
+      <label>
+        Parking name
+        <input
+          name="pname"
+          [(ngModel)]="parkingForm.name"
+          required
+          placeholder="e.g. City Centre Parking">
+      </label>
+
+      <label>
+        Address
+        <input
+          name="address"
+          [(ngModel)]="parkingForm.address"
+          required
+          placeholder="Street, area, city">
+      </label>
+
+      <label>
+        Latitude
+        <input
+          name="lat"
+          type="number"
+          step="any"
+          [(ngModel)]="parkingForm.latitude"
+          required>
+      </label>
+
+      <label>
+        Longitude
+        <input
+          name="lng"
+          type="number"
+          step="any"
+          [(ngModel)]="parkingForm.longitude"
+          required>
+      </label>
+
+      <!-- BIKE CAPACITY -->
+
+      <h3 class="vehicle-heading">🏍️ Bike Parking Capacity</h3>
+
+      <label>
+        Total bike slots
+        <input
+          name="bikeTotal"
+          type="number"
+          min="0"
+          [(ngModel)]="parkingForm.vehicleSlots.bike.total"
+          required>
+      </label>
+
+      <label>
+        Available bike slots
+        <input
+          name="bikeAvailable"
+          type="number"
+          min="0"
+          [max]="parkingForm.vehicleSlots.bike.total"
+          [(ngModel)]="parkingForm.vehicleSlots.bike.available"
+          required>
+      </label>
+
+      <!-- CAR CAPACITY -->
+
+      <h3 class="vehicle-heading">🚗 Car Parking Capacity</h3>
+
+      <label>
+        Total car slots
+        <input
+          name="carTotal"
+          type="number"
+          min="0"
+          [(ngModel)]="parkingForm.vehicleSlots.car.total"
+          required>
+      </label>
+
+      <label>
+        Available car slots
+        <input
+          name="carAvailable"
+          type="number"
+          min="0"
+          [max]="parkingForm.vehicleSlots.car.total"
+          [(ngModel)]="parkingForm.vehicleSlots.car.available"
+          required>
+      </label>
+
+      <!-- AUTO CAPACITY -->
+
+      <h3 class="vehicle-heading">🛺 Auto Parking Capacity</h3>
+
+      <label>
+        Total auto slots
+        <input
+          name="autoTotal"
+          type="number"
+          min="0"
+          [(ngModel)]="parkingForm.vehicleSlots.auto.total"
+          required>
+      </label>
+
+      <label>
+        Available auto slots
+        <input
+          name="autoAvailable"
+          type="number"
+          min="0"
+          [max]="parkingForm.vehicleSlots.auto.total"
+          [(ngModel)]="parkingForm.vehicleSlots.auto.available"
+          required>
+      </label>
+
+      <button class="btn primary" type="submit">
+        {{editingId?'Save changes':'Add location'}}
+      </button>
+
+      <button
+        *ngIf="editingId"
+        class="btn ghost"
+        type="button"
+        (click)="editingId='';parkingForm={
+          name:'',
+          address:'',
+          latitude:17.385,
+          longitude:78.4867,
+          vehicleSlots:{
+            bike:{total:0,available:0},
+            car:{total:0,available:0},
+            auto:{total:0,available:0}
+          }
+        }">
+        Cancel edit
+      </button>
+
+    </form>
+  </section>
+
+  <!-- USER VEHICLE SELECTION -->
+
+  <section *ngIf="mode==='user'" class="panel">
+
+    <div class="section-title">
+      <div>
+        <h2>Select your vehicle</h2>
+        <p>Choose your vehicle to see matching parking availability.</p>
+      </div>
+    </div>
+
+    <div class="vehicle-selector">
+
+      <button
+        type="button"
+        class="btn"
+        [class.primary]="selectedVehicleType==='bike'"
+        [class.ghost]="selectedVehicleType!=='bike'"
+        (click)="selectedVehicleType='bike'">
+        🏍️ Bike
+      </button>
+
+      <button
+        type="button"
+        class="btn"
+        [class.primary]="selectedVehicleType==='car'"
+        [class.ghost]="selectedVehicleType!=='car'"
+        (click)="selectedVehicleType='car'">
+        🚗 Car
+      </button>
+
+      <button
+        type="button"
+        class="btn"
+        [class.primary]="selectedVehicleType==='auto'"
+        [class.ghost]="selectedVehicleType!=='auto'"
+        (click)="selectedVehicleType='auto'">
+        🛺 Auto
+      </button>
+
+    </div>
+
+  </section>
+
+  <!-- MAP AND PARKING LOCATIONS -->
+
+  <div class="workspace">
+
+    <section class="panel map-panel">
+
+      <div class="section-title">
+        <div>
+          <h2>Parking map</h2>
+          <p>
+            <span class="legend green-dot"></span> Available
+            <span class="legend red-dot"></span> Full
+          </p>
+        </div>
+
+        <button class="btn small ghost" (click)="locateMe()">
+          ◎ My location
+        </button>
+      </div>
+
+      <div #mapHost class="map-host"></div>
+      <div #streetHost class="street-host"></div>
+
+      <div *ngIf="!mapsReady" class="map-warning">
+        The map tiles could not be loaded. Check your internet connection and refresh.
+      </div>
+
+      <div class="map-actions" *ngIf="mode==='user'">
+
+        <button
+          class="btn primary"
+          [disabled]="!selected"
+          (click)="directionsToSelected()">
+          Get directions ↗
+        </button>
+
+        <button
+          class="btn ghost"
+          [disabled]="!selected"
+          (click)="toggleStreetView()">
+          Street View
+        </button>
+
+      </div>
+
+    </section>
+
+    <!-- PARKING LOCATION LIST -->
+
+    <section class="panel locations-panel">
+
+      <div class="section-title">
+        <div>
+          <h2>{{mode==='admin'?'Manage locations':'Nearby parking'}}</h2>
+          <p>{{filtered.length}} locations listed</p>
+        </div>
+      </div>
+
+      <input
+        class="search"
+        [(ngModel)]="search"
+        placeholder="⌕ Search by name or address">
+
+      <div class="location-list">
+
+        <article
+          class="location"
+          *ngFor="let p of filtered"
+          [class.selected]="selected?._id===p._id"
+          (click)="select(p)">
+
+          <div class="location-top">
+
+            <div>
+              <h3>{{p.name}}</h3>
+              <p>{{p.address}}</p>
+            </div>
+
+            <span
+              class="status"
+              [class.full]="
+                (p.vehicleSlots?.bike?.available || 0) +
+                (p.vehicleSlots?.car?.available || 0) +
+                (p.vehicleSlots?.auto?.available || 0) === 0">
+
+              {{
+                (p.vehicleSlots?.bike?.available || 0) +
+                (p.vehicleSlots?.car?.available || 0) +
+                (p.vehicleSlots?.auto?.available || 0) > 0
+                  ? 'OPEN'
+                  : 'FULL'
+              }}
+
+            </span>
+
+          </div>
+
+          <!-- VEHICLE-WISE AVAILABILITY -->
+
+          <div class="availability">
+
+            <div>
+              <strong>🏍️ Bike</strong>
+              <small>
+                {{p.vehicleSlots?.bike?.available || 0}}
+                / {{p.vehicleSlots?.bike?.total || 0}} available
+              </small>
+            </div>
+
+            <div class="bar">
+              <span
+                [style.width.%]="
+                  p.vehicleSlots?.bike?.total
+                    ? p.vehicleSlots.bike.available /
+                      p.vehicleSlots.bike.total * 100
+                    : 0">
+              </span>
+            </div>
+
+          </div>
+
+          <div class="availability">
+
+            <div>
+              <strong>🚗 Car</strong>
+              <small>
+                {{p.vehicleSlots?.car?.available || 0}}
+                / {{p.vehicleSlots?.car?.total || 0}} available
+              </small>
+            </div>
+
+            <div class="bar">
+              <span
+                [style.width.%]="
+                  p.vehicleSlots?.car?.total
+                    ? p.vehicleSlots.car.available /
+                      p.vehicleSlots.car.total * 100
+                    : 0">
+              </span>
+            </div>
+
+          </div>
+
+          <div class="availability">
+
+            <div>
+              <strong>🛺 Auto</strong>
+              <small>
+                {{p.vehicleSlots?.auto?.available || 0}}
+                / {{p.vehicleSlots?.auto?.total || 0}} available
+              </small>
+            </div>
+
+            <div class="bar">
+              <span
+                [style.width.%]="
+                  p.vehicleSlots?.auto?.total
+                    ? p.vehicleSlots.auto.available /
+                      p.vehicleSlots.auto.total * 100
+                    : 0">
+              </span>
+            </div>
+
+          </div>
+
+          <!-- USER BOOKING BUTTON -->
+
+          <div class="location-actions" *ngIf="mode==='user'">
+
+            <button
+              class="btn primary small"
+              [disabled]="getAvailableSlots(p)<1"
+              (click)="book(p);$event.stopPropagation()">
+
+              {{
+                getAvailableSlots(p)>0
+                  ? 'Book '+selectedVehicleType+' slot'
+                  : 'No '+selectedVehicleType+' slots'
+              }}
+
+            </button>
+
+            <button
+              class="btn text small"
+              (click)="select(p);directionsToSelected();$event.stopPropagation()">
+              Directions ↗
+            </button>
+
+          </div>
+
+          <!-- ADMIN ACTIONS -->
+
+          <div class="location-actions" *ngIf="mode==='admin'">
+
+            <button
+              class="btn ghost small"
+              (click)="editParking(p);$event.stopPropagation()">
+              Edit
+            </button>
+
+            <button
+              class="btn danger small"
+              (click)="deleteParking(p);$event.stopPropagation()">
+              Delete
+            </button>
+
+          </div>
+
+        </article>
+
+        <p *ngIf="filtered.length===0" class="empty">
+          No parking locations found.
+          {{mode==='admin'?'Add your first location above.':'Try another search.'}}
+        </p>
+
+      </div>
+    </section>
+
+  </div>
+
+  <!-- USER BOOKINGS -->
+
+  <section *ngIf="mode==='user'" class="panel bookings-panel">
+
+    <div class="section-title">
+      <div>
+        <h2>My bookings</h2>
+        <p>Your current and previous reservations</p>
+      </div>
+
+      <button class="btn ghost small" (click)="loadMyBookings()">
+        Refresh bookings
+      </button>
+    </div>
+
+    <div class="booking-row" *ngFor="let b of bookings">
+
+      <div>
+        <b>{{b.parking?.name || 'Parking location'}}</b>
+
+        <p>
+          {{b.parking?.address}}
+          · {{b.vehicleType | uppercase}}
+          · Slot {{b.slotNumber}}
+        </p>
+      </div>
+
+      <span
+        class="status"
+        [class.full]="b.status==='cancelled'">
+        {{b.status}}
+      </span>
+
+      <button
+        *ngIf="b.status==='booked'"
+        class="btn danger small"
+        (click)="cancel(b)">
+        Cancel
+      </button>
+
+    </div>
+
+    <p *ngIf="bookings.length===0" class="empty">
+      No bookings yet. Choose a parking location to reserve a slot.
+    </p>
+
+  </section>
+
+  <!-- ADMIN ALL BOOKINGS -->
+
+  <section *ngIf="mode==='admin'" class="panel bookings-panel">
+
+    <div class="section-title">
+      <div>
+        <h2>All bookings</h2>
+        <p>Reservations made by registered users</p>
+      </div>
+
+      <button class="btn ghost small" (click)="loadAllBookings()">
+        Refresh
+      </button>
+    </div>
+
+    <div class="booking-row" *ngFor="let b of allBookings">
+
+      <div>
+        <b>{{b.user?.name}} · {{b.parking?.name}}</b>
+
+        <p>
+          {{b.user?.email}}
+          · {{b.vehicleType | uppercase}}
+          · Slot {{b.slotNumber}}
+          · {{b.bookingDate | date:'medium'}}
+        </p>
+      </div>
+
+      <span
+        class="status"
+        [class.full]="b.status==='cancelled'">
+        {{b.status}}
+      </span>
+
+    </div>
+
+    <p *ngIf="allBookings.length===0" class="empty">
+      No bookings yet.
+    </p>
+
+  </section>
+
+</main>
+
+<!-- LOGIN AND REGISTRATION MODAL -->
+
+<div
+  class="auth-backdrop"
+  *ngIf="mode==='home' && authOpen"
+  (click)="authOpen=false">
+
+  <section class="auth-card" (click)="$event.stopPropagation()">
+
+    <button class="close" (click)="authOpen=false">×</button>
+
+    <div class="eyebrow">
+      {{authMode==='admin-login'
+        ?'ADMIN ACCESS'
+        :authMode==='register'
+        ?'CREATE ACCOUNT'
+        :'WELCOME BACK'}}
+    </div>
+
+    <h2>
+      {{authMode==='admin-login'
+        ?'Admin sign in'
+        :authMode==='register'
+        ?'Create your account'
+        :'User sign in'}}
+    </h2>
+
+    <p>
+      {{authMode==='admin-login'
+        ?'Sign in to manage parking locations and bookings.'
+        :'Access live parking availability and your reservations.'}}
+    </p>
+
+    <form (ngSubmit)="submitAuth()">
+
+      <label *ngIf="authMode==='register'">
+        Full name
+        <input
+          name="name"
+          [(ngModel)]="form.name"
+          required>
+      </label>
+
+      <label *ngIf="authMode==='admin-login'">
+        Admin username
+        <input
+          name="username"
+          [(ngModel)]="form.username"
+          required>
+      </label>
+
+      <label *ngIf="authMode!=='admin-login'">
+        Email address
+        <input
+          name="email"
+          type="email"
+          [(ngModel)]="form.email"
+          required>
+      </label>
+
+      <label>
+        Password
+        <input
+          name="password"
+          type="password"
+          [(ngModel)]="form.password"
+          minlength="8"
+          required>
+      </label>
+
+      <button class="btn primary full-width" type="submit">
+        {{authMode==='register'?'Create account':'Sign in'}}
+      </button>
+
+    </form>
+
+    <p class="switch" *ngIf="authMode!=='admin-login'">
+
+      {{authMode==='register'?'Already registered?':'New here?'}}
+
+      <a (click)="openAuth(authMode==='register'?'user-login':'register')">
+        {{authMode==='register'?'Sign in':'Create an account'}}
+      </a>
+
+    </p>
+
+    <p class="switch" *ngIf="authMode==='admin-login'">
+      <a (click)="openAuth('user-login')">Back to user login</a>
+    </p>
+
+    <div *ngIf="error" class="notice error">{{error}}</div>
+
+  </section>
+</div>
